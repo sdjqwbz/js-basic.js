@@ -3,22 +3,23 @@
 //2016.2.7
 
 //简单定义
-var $ = function() {
-    return new Base();
+var $ = function(_this) {
+    return new Base(_this);
 }
 
 //基础库
-function Base() {
-    //用来保存获取的节点和节点数组
-    //将每个数组私有化，需要放进里面来
+function Base(_this) {
     this.elements = [];
+    if(_this != undefined) {
+        this.elements[0] = _this;
+    }
 }
 
-Base.prototype.getId = function (id) {  //获取ID节点
+Base.prototype.getId = function (id) {          //获取ID节点
     this.elements.push(document.getElementById(id));
     return this;
 };
-Base.prototype.getTagName = function (tag) {  //获取元素节点数组
+Base.prototype.getTagName = function (tag) {    //获取元素节点数组
     var tags = document.getElementsByTagName(tag);
     for(var i = 0; i < tag.length; i++) {
         this.elements.push(tags[i]);
@@ -26,15 +27,14 @@ Base.prototype.getTagName = function (tag) {  //获取元素节点数组
     return this;
 };
 
-//获取Class节点数组
-Base.prototype.getClass = function(className, idName) {
+Base.prototype.getClass = function(className, idName) { //获取Class节点数组
     var node = null;
     if(arguments.length == 2) {
         node = document.getElementById(idName);
     } else {
         node = document;
     }
-    var all = node.getElementsByTagName('*'); //获取所有的标签
+    var all = node.getElementsByTagName('*');
     for(var i = 0; i < all.length; i++) {
         if(all[i].className == className) {
             this.elements.push(all[i]);
@@ -43,19 +43,16 @@ Base.prototype.getClass = function(className, idName) {
     return this;
 };
 
-//获取某一个节点
-Base.prototype.getElement = function(num) {
+Base.prototype.getElement = function(num) {  //获取某一个节点
     var element = this.elements[num];
     this.elements = [];
     this.elements[0] = element;
     return this;
 }
 
-//设置CSS
-Base.prototype.css = function(attr, value) {
+Base.prototype.css = function(attr, value) {  //设置CSS
     for(var i = 0; i < this.elements.length; i++) {
-        if(arguments.length == 1) { //如果只传一个参数，即查询该参数样式
-            //return this.elements[i].style[attr];  //这个只能返回行内的样式
+        if(arguments.length == 1) {
             if(typeof window.getComputedStyle != 'undefined') { //W3C
                 return window.getComputedStyle(this.elements[i], null)[attr];
             } else if(typeof this.elements[i].currentStyle != 'undefined') { //IE
@@ -67,19 +64,16 @@ Base.prototype.css = function(attr, value) {
     return this;
 };
 
-//添加Class
-Base.prototype.addClass = function(className) {
+Base.prototype.addClass = function(className) {  //添加Class
     for(var i = 0; i < this.elements.length; i++) {
         if(!this.elements[i].className.match(new RegExp('(\\s|^)' + className + '(\\s|$)'))) {
             this.elements[i].className += ' ' + className;
         }
-        //this.elements[i].className = className;
     }
     return this;
 }
 
-//移除Class
-Base.prototype.removeClass = function(className) {
+Base.prototype.removeClass = function(className) {  //移除Class
     for(var i =0; i < this.elements.length; i++) {
         if(this.elements[i].className.match(new RegExp('(\\s|^)' + className + '(\\s|$)'))) {
             this.elements[i].className = this.elements[i].className.replace(new RegExp('(\\s|^)' + className + '(\\s|$)'), ' ');
@@ -88,7 +82,7 @@ Base.prototype.removeClass = function(className) {
     return this;
 }
 
-//添加link或style的规则(这两个添加和移除的规则比较少用)
+//添加link或style的规则
 Base.prototype.addRule = function(num,selectorText,cssText,position) {
     var sheet = document.styleSheets[num];
     if(typeof sheet.insertRule != 'undefined') { //W3C
@@ -99,8 +93,7 @@ Base.prototype.addRule = function(num,selectorText,cssText,position) {
     return this;
 };
 
-//移除link或style的规则
-Base.prototype.removeRule = function(num,index) {
+Base.prototype.removeRule = function(num,index) {  //移除link或style的规则
     var sheet = document.styleSheets[num];
     if(typeof sheet.insertRule != 'undefined') { //W3C
         sheet.deleteRule(index);
@@ -110,9 +103,7 @@ Base.prototype.removeRule = function(num,index) {
     return this;
 };
 
-
-//设置innerHTML
-Base.prototype.html = function(str) {
+Base.prototype.html = function(str) {  //设置innerHTML
     for(var i = 0; i < this.elements.length; i++) {
         if(arguments.length == 0) {
             return this.elements[i].innerHTML;
@@ -122,10 +113,34 @@ Base.prototype.html = function(str) {
     return this;
 };
 
-//触发点击事件
-Base.prototype.click = function(fn) {
+Base.prototype.hover = function(over, out) {  //设置鼠标移入移出事件
+    for(var i = 0; i < this.elements.length; i++) {
+        this.elements[i].onmouseover = over;
+        this.elements[i].onmouseout = out;
+    }
+    return this;
+};
+
+Base.prototype.show = function() {          //设置显示
+    for(var i = 0; i < this.elements.length; i++) {
+        this.elements[i].style.display = 'block';
+    }
+    return this;
+};
+
+Base.prototype.hide = function() {          //设置隐藏
+    for(var i = 0; i < this.elements.length; i++) {
+        this.elements[i].style.display = 'none';
+    }
+    return this;
+};
+
+Base.prototype.click = function(fn) {       //触发点击事件
     for(var i = 0; i < this.elements.length; i++) {
         this.elements[i].onclick = fn;
     }
     return this;
 };
+
+
+
