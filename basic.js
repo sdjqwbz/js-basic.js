@@ -1,6 +1,6 @@
 
 
-//2016.2.13 基础封装库
+//2016.2.19 基础封装库
 //代码 by 李炎恢js教程
 
 //2016.2.12 遮罩锁屏 添加了设置css、添加移除class、添加解除锁屏、跨浏览器获取视窗大小的函数,添加了 判断class是否存在、跨浏览器添加移除link规则 的函数
@@ -230,65 +230,4 @@ Base.prototype.resize = function(fn) {   //触发浏览器窗口事件
     }
     return this;
 };
-
-function getInner() {    //跨浏览器获取视窗大小
-    if(typeof window.innerWidth != 'undefined') {
-        return {
-            width : window.innerWidth,
-            height : window.innerHeight
-        }
-    } else {
-        return {
-            width : document.documentElement.clientWidth,
-            height : document.documentElement.clientHeight
-        }
-    }
-}
-
-function getStyle(element, attr) {  //跨浏览器获取Style
-    if(typeof window.getComputedStyle != 'undefined') { //W3C
-        return window.getComputedStyle(element, null)[attr];
-    } else if(typeof element.currentStyle != 'undefined') { //IE
-        return element.currentStyle[attr];
-    }
-}
-
-//判断class是否存在
-function hasClass(element, className) {
-    return element.className.match(new RegExp('(\\s|^)' + className + '(\\s|$)'));
-}
-
-//跨浏览器添加link规则
-function insertRule(sheet, selectorText, cssText, position) {
-    if(typeof sheet.insertRule != 'undefined') { //W3C
-        sheet.insertRule(selectorText+'{'+cssText+'}', position);
-    } else if(typeof sheet.addRule != 'undefined') { //IE
-        sheet.addRule(selectorText, cssText, position);
-    }
-}
-
-//跨浏览器移除link规则
-function deleteRule(sheet, index) {
-    if(typeof sheet.insertRule != 'undefined') { //W3C
-        sheet.deleteRule(index);
-    } else if(typeof sheet.removeRule != 'undefined') { //IE
-        sheet.removeRule(index);
-    }
-}
-
-//获取Event对象
-function getEvent(e) {
-    return e || window.event;
-}
-
-//阻止默认行为
-function preDef(event) {
-    var e = getEvent(event);
-    if(typeof e.preventDefault != 'undefined') { //W3C
-        e.preventDefault();
-    } else { //IE
-        e.returnValue = false;
-    }
-}
-
 
