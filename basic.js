@@ -1,60 +1,156 @@
 
 
-//2016.2.19 基础封装库
+//2016.2.23 基础封装库
 //代码 by 李炎恢js教程
 
-//2016.2.12 遮罩锁屏 添加了设置css、添加移除class、添加解除锁屏、跨浏览器获取视窗大小的函数,添加了 判断class是否存在、跨浏览器添加移除link规则 的函数
-
-//2016.2.13 添加了 拖拽功能，获取Event对象、阻止默认行为的函数, 改写了触发浏览器窗口事件
-
+//2016.2.23
+//将传统事件绑定改为现代事件绑定，修改鼠标移入移出事件、触发浏览器窗口事件、拖拽功能、插件入口(将拖拽功能分离出来，做成插件的形式，以后要使用时直接在html文档引入script即可)、修改获取某节点. 
+//添加css选择器子节点、修改三个节点获取的方式（以后不再用getId等方式获取节点）划分css选择器的find模拟和css模拟
+//添加 addDomLoaded、获取首个节点/最后一个节点
 
 //简单定义
-var $ = function(_this) {
-    return new Base(_this);
+var $ = function(args) {
+    return new Base(args);
 }
 
 //基础库
-function Base(_this) {
+function Base(args) {
     this.elements = [];
-    if(_this != undefined) {
-        this.elements[0] = _this;
+    if(typeof args == 'string') {  //css选择器
+        if(args.indexOf(' ') != -1) {  //css模拟
+            var elements = args.split(' ');
+            var childElements = [];  //存放临时节点对象的数组,防止被覆盖
+            var node = [];          //用来存放父节点
+            for(var i = 0; i < elements.length; i++) {
+                if(node.length == 0) node.push(document); //没有父节点则为document
+                switch(elements[i].charAt(0)) {
+                    case '#' : 
+                        childElements = [];  //清理临时节点
+                        childElements.push(this.getId(elements[i].substring(1)));
+                        node = childElements; //保存父节点
+                        break;
+                    case '.' :
+                        childElements = [];
+                        for(var j = 0; j < node.length; j++) {
+                            var temps = this.getClass(elements[i].substring(1), node[j]);
+                            for(var k = 0; k < temps.length; k++) {
+                                childElements.push(temps[k]);
+                            }
+                        }
+                        node = childElements;
+                        break;
+                    default : 
+                        childElements = [];
+                        for(var j = 0; j < node.length; j++) {
+                            var temps = this.getTagName(elements[i], node[j]);
+                            for(var k = 0; k < temps.length; k++) {
+                                childElements.push(temps[k]);
+                            }
+                        }
+                        node = childElements;
+                }
+            }
+            this.elements = childElements;
+        } else {    //find模拟
+            switch(args.charAt(0)) {  
+                case '#' : 
+                    this.elements.push(this.getId(args.substring(1)));
+                    break;
+                case '.' :
+                    this.elements = this.getClass(args.substring(1));
+                    break;
+                default :
+                    this.elements = this.getTagName(args);
+            }
+        }
+    } else if(typeof args == 'object') {
+        if(args != undefined) {
+            this.elements[0] = args;
+        }
+    } else if(typeof args == 'function') {
+        this.ready(args);
     }
 }
 
-Base.prototype.getId = function (id) {          //获取ID节点
-    this.elements.push(document.getElementById(id));
-    return this;
-};
-Base.prototype.getTagName = function (tag) {    //获取元素节点数组
-    var tags = document.getElementsByTagName(tag);
-    for(var i = 0; i < tag.length; i++) {
-        this.elements.push(tags[i]);
-    }
-    return this;
+//addDomLoaded
+Base.prototype.ready = function(fn) {
+    addDomLoaded(fn);
 };
 
-Base.prototype.getClass = function(className, idName) { //获取Class节点数组
+Base.prototype.getId = function (id) {          //获取ID节点
+    return document.getElementById(id);
+};
+Base.prototype.getTagName = function (tag, parentNode) {    //获取元素节点数组
     var node = null;
-    if(arguments.length == 2) {
-        node = document.getElementById(idName);
+    var temps = [];
+    if(parentNode != undefined) {
+        node = parentNode;
+    } else {
+        node = document;
+    }
+    var tags = node.getElementsByTagName(tag);
+    for(var i = 0; i < tags.length; i++) {
+            temps.push(tags[i]);
+    }
+    return temps;
+};
+Base.prototype.getClass = function(className, parentNode) { //获取Class节点数组
+    var node = null;
+    var temps = [];
+    if(parentNode != undefined) {
+        node = parentNode;
     } else {
         node = document;
     }
     var all = node.getElementsByTagName('*');
     for(var i = 0; i < all.length; i++) {
         if(all[i].className == className) {
-            this.elements.push(all[i]);
+            temps.push(all[i]);
         }
     }
+    return temps;
+};
+
+//设置CSS选择器子节点
+Base.prototype.find = function(str) {
+    var childElements = [];
+    for(var i = 0; i < this.elements.length; i++) {
+        switch(str.charAt(0)) {
+            case '#' : 
+                childElements.push(this.getId(str.substring(1)));
+                break;
+            case '.' :
+                var temps = this.getClass(str.substring(1), this.elements[i]);
+                for(var j = 0; j < temps.length; j++) {
+                    childElements.push(temps[j]);
+                }
+                break;
+            default :
+                var temps = this.getTagName(str, this.elements[i]);
+                for(var j = 0; j < temps.length; j++) {
+                    childElements.push(temps[j]);
+                }
+        }
+    }
+    this.elements = childElements;
     return this;
 };
 
-Base.prototype.getElement = function(num) {  //获取某一个节点
+Base.prototype.ge = function(num) {  //getEvent 获取某一个节点,返回该节点对象
+    return this.elements[num];
+}
+Base.prototype.eq = function(num) {  //获取某一个节点,返回Base对象
     var element = this.elements[num];
     this.elements = [];
     this.elements[0] = element;
     return this;
-}
+};
+Base.prototype.first = function() { //获取首个节点
+    return this.elements[0];
+};
+Base.prototype.last = function() { //获取最后一个节点
+    return this.elements[this.elements.length-1];
+};
 
 Base.prototype.css = function(attr, value) {  //设置CSS
     for(var i = 0; i < this.elements.length; i++) {
@@ -109,14 +205,13 @@ Base.prototype.html = function(str) {       //设置innerHTML
 
 Base.prototype.hover = function(over, out) {  //设置鼠标移入移出事件
     for(var i = 0; i < this.elements.length; i++) {
-        this.elements[i].onmouseover = over;
-        this.elements[i].onmouseout = out;
+        addEvent(this.elements[i], 'mouseover', over);
+        addEvent(this.elements[i], 'mouseout', out);
     }
     return this;
 };
 
-//设置鼠标点击事件
-Base.prototype.mousedown = function(fn) {
+Base.prototype.mousedown = function(fn) {      //设置鼠标点击事件
     for(var i = 0; i < this.elements.length; i++) {
         this.elements[i].onmousedown = fn;
     }
@@ -140,8 +235,8 @@ Base.prototype.hide = function() {          //设置隐藏
 
 //这种方法设置时有bug，有时不能准确获取浏览器的宽高
 Base.prototype.center = function(left, top) {  //设置物体居中
-    var top = (document.documentElement.clientHeight - top) / 2;
-    var left = (document.documentElement.clientWidth - left) / 2;
+    var top = (getInner().height - top) / 2;
+    var left = (getInner().width - left) / 2;
     for(var i = 0; i < this.elements.length; i++) {
         this.elements[i].style.top = top + 'px';
         this.elements[i].style.left = left + 'px';
@@ -167,47 +262,6 @@ Base.prototype.unlock = function() {  //解除锁屏
     return this;
 };
 
-Base.prototype.drag = function() {   //拖拽功能
-    for(var i = 0; i < this.elements.length; i++) {
-        this.elements[i].onmousedown = function(e) {
-            preDef(e);
-            var e = getEvent(e);
-            var _this = this;
-            var divX = e.clientX - _this.offsetLeft,
-                divY = e.clientY - _this.offsetTop;
-            if(typeof _this.setCapture != 'undefined') {
-                _this.setCapture();
-            }
-            //点击某个物体用的是oDiv，move和up是全局区域，应该用document
-            document.onmousemove = function() {
-                var e = getEvent(e);
-                var left = e.clientX - divX,
-                    top = e.clientY - divY;
-                if(left < 0) {
-                    left = 0;
-                } else if(left > getInner().width - _this.offsetWidth) {
-                    left = getInner().width - _this.offsetWidth;
-                }
-                if(top < 0) {
-                    top = 0;
-                } else if(top > getInner().height - _this.offsetHeight) {
-                    top = getInner().height - _this.offsetHeight;
-                }
-                _this.style.left = left + 'px';
-                _this.style.top = top + 'px';
-            };
-            document.onmouseup = function() {
-                this.onmousemove = null;
-                this.onmouseup = null;
-                if(typeof _this.releaseCapture != 'undefined') {
-                    _this.releaseCapture();
-                }
-            };
-        };
-    }
-    return this;
-};
-
 Base.prototype.click = function(fn) {       //触发点击事件
     for(var i = 0; i < this.elements.length; i++) {
         this.elements[i].onclick = fn;
@@ -218,7 +272,7 @@ Base.prototype.click = function(fn) {       //触发点击事件
 Base.prototype.resize = function(fn) {   //触发浏览器窗口事件
     for(var i = 0; i < this.elements.length; i++) {
         var element = this.elements[i];
-        window.onresize = function() {
+        addEvent(window, 'resize', function() {
             fn();
             if(element.offsetLeft > getInner().width - element.offsetWidth) {
                 element.style.left = getInner().width - element.offsetWidth + 'px';
@@ -226,8 +280,15 @@ Base.prototype.resize = function(fn) {   //触发浏览器窗口事件
             if(element.offsetTop > getInner().height - element.offsetHeight) {
                 element.style.top = getInner().height - element.offsetHeight + 'px';
             }
-        };
+        });
     }
     return this;
 };
+
+//插件入口
+Base.prototype.extend = function(name, fn) {
+    Base.prototype[name] = fn;
+};
+
+
 

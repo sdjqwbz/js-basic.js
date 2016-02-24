@@ -1,9 +1,10 @@
 
-//2016.2.19 基础函数库
+//2016.2.23 基础函数库
 //代码 by 李炎恢js教程
 
-//2016.2.13 添加 跨浏览器事件绑定和移除的函数 并进行完善
-
+//2016.2.23
+//添加 删除左右空格函数、滚动条初始化
+//添加浏览器检测的闭包函数、DOM加载函数
 
 function getInner() {    //跨浏览器获取视窗大小
     if(typeof window.innerWidth != 'undefined') {
@@ -112,29 +113,80 @@ addEvent.fixEvent = function(event) {
     event.stopPropagation = function() {
         this.cancelBubble = true;  //IE取消冒泡
     };
+    event.target = event.srcElement;
     return event;
 };
-/* 疑问：为什么要和上面分离开来，为了清晰简明？
-addEvent.fixEvent.preventDefault = function() {  //IE阻止默认行为
-    this.returnValue = false;
-};
-addEvent.fixEvent.stopPropagation = function() {  //IE取消冒泡
-    this.cancelBubble = true;
-};
-*/
+
+//浏览器检测
+(function(){
+    window.sys = {};  //保存浏览器信息，外部可访问
+    var ua = navigator.userAgent.toLowerCase();
+    var s;      //浏览器名称+版本
+    (s = ua.match(/msie ([\d.]+)/)) ? sys.ie = s[1] : 
+    (s = ua.match(/firefox\/([\d.]+)/)) ? sys.firefox = s[1] : 
+    (s = ua.match(/chrome\/([\d.]+)/)) ? sys.chrome = s[1] : 
+    (s = ua.match(/opera\/.*version\/([\d.]+)/)) ? sys.opera = s[1] : 
+    (s = ua.match(/version\/([\d.]+).*safari/)) ? sys.safari = s[1] : 0;
+    if(/webkit/.test(ua)) sys.webkit = ua.match(/webkit\/([\d.]+)/)[1];
+})();
+
+//DOM加载
+function addDomLoaded(fn) {  
+    var isReady = false;
+    var timer = null;
+    function doReady() {
+        if(timer) clearInterval(timer);
+        if(isReady) return;
+        isReady = true;
+        fn();
+    } 
+    if((sys.opera && sys.opera < 9) || (sys.firefox && sys.firefox < 3) || (sys.webkit && sys.webkit < 525)) {
+        //向下兼容低版本
+        timer = setInterval(function(){
+            if(document && document.getElementById && document.getElementsByTagName && document.body) doReady();
+        }, 1);
+    } else if(document.addEventListener) {  //W3C
+        addEvent(document, 'DOMContentLoaded', function() {
+            fn();
+            removeEvent(document, 'DOMContentLoaded', arguments.callee);
+        });
+    } else if(sys.ie && sys.ie < 9) {
+        var timer = null;
+        timer = setInterval(function(){
+            try {
+                document.documentElement.doScroll('left');
+                doReady();
+            } catch(e) {}
+        }, 1);
+    }
+}
 
 //跨浏览器移除事件绑定
 function removeEvent(obj, type, fn) {
     if(typeof obj.removeEventListener != 'undefined') {
         obj.removeEventListener(type, fn, false);
     } else {
-        for(var i in obj.events[type]) {
-            if(obj.events[type][i] == fn) {
-                delete obj.events[type][i];
+        if(obj.events) {
+            for(var i in obj.events[type]) {
+                if(obj.events[type][i] == fn) {
+                    delete obj.events[type][i];
+                }
             }
         }
     }
 }
+
+//删除左右空格
+function trim(str) {
+    return str.replace(/(^\s*)|(\s*$)/g, '');
+}
+
+//滚动条初始化
+function scrollTop() {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+}
+
 
 
 
