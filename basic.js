@@ -1,12 +1,14 @@
 
 
-//2016.2.23 基础封装库
+//2016.3.3 基础封装库
 //代码 by 李炎恢js教程
 
-//2016.2.23
-//将传统事件绑定改为现代事件绑定，修改鼠标移入移出事件、触发浏览器窗口事件、拖拽功能、插件入口(将拖拽功能分离出来，做成插件的形式，以后要使用时直接在html文档引入script即可)、修改获取某节点. 
-//添加css选择器子节点、修改三个节点获取的方式（以后不再用getId等方式获取节点）划分css选择器的find模拟和css模拟
-//添加 addDomLoaded、获取首个节点/最后一个节点
+//2016.2.24
+//新增 设置动画的函数 并将其封装为插件
+//添加 获取所有节点，返回节点数组的函数
+//2016.3.1
+//添加 设置点击切换效果的函数、获取当前节点下一个元素节点/前一个节点、获取某一节点的属性、获取某一节点在节点组中的索引、添加获取节点组的长度
+//2016.3.3 添加 设置透明度的函数
 
 //简单定义
 var $ = function(args) {
@@ -151,6 +153,54 @@ Base.prototype.first = function() { //获取首个节点
 Base.prototype.last = function() { //获取最后一个节点
     return this.elements[this.elements.length-1];
 };
+Base.prototype.all = function() {  //获取所有节点，返回节点数组
+    var all = [];
+    for(var i = 0; i < this.elements.length; i++) {
+        all[i] = this.elements[i];
+    }
+    return all;
+};
+Base.prototype.length = function() { //获取节点组的长度
+    return this.elements.length;
+};
+//获取当前节点的下一个元素节点
+Base.prototype.next = function() {
+    for(var i = 0; i < this.elements.length; i++) {
+        this.elements[i] = this.elements[i].nextSibling;
+        if(this.elements[i] == null) throw new Error('找不到下一个同级元素节点');
+        if(this.elements[i].nodeType == 3) this.next();
+    }
+    return this;
+};
+//获取当前节点的上一个元素节点
+Base.prototype.prev = function() {
+    for(var i = 0; i < this.elements.length; i++) {
+        this.elements[i] = this.elements[i].previousSibling;
+        if(this.elements[i] == null) throw new Error('找不到上一个同级元素节点');
+        if(this.elements[i].nodeType == 3) this.prev();
+    }
+    return this;
+};
+//获取某一节点的属性
+Base.prototype.attr = function(attr) {
+    return this.elements[0][attr];
+};
+//获取某一节点在节点组中的索引
+Base.prototype.index = function() {
+    var children = this.elements[0].parentNode.children;
+    for(var i = 0; i < children.length; i++) {
+        if(this.elements[0] == children[i]) return i;
+    }
+};
+
+//设置某一节点的透明度
+Base.prototype.opacity = function(num) {
+    for(var i = 0; i < this.elements.length; i++) {
+        this.elements[i].opacity = num / 100;
+        this.elements[i].filter = 'alpha(opacity=' + num + ')';
+    }
+    return this;
+};
 
 Base.prototype.css = function(attr, value) {  //设置CSS
     for(var i = 0; i < this.elements.length; i++) {
@@ -214,6 +264,19 @@ Base.prototype.hover = function(over, out) {  //设置鼠标移入移出事件
 Base.prototype.mousedown = function(fn) {      //设置鼠标点击事件
     for(var i = 0; i < this.elements.length; i++) {
         this.elements[i].onmousedown = fn;
+    }
+    return this;
+};
+
+//设置点击切换效果
+Base.prototype.toggle = function() {
+    for(var i = 0; i < this.elements.length; i++) {
+        (function(element, args) {
+            var count = 0;
+            addEvent(element, 'click', function(){
+                args[count++ % args.length].call(this);
+            });
+        })(this.elements, arguments);
     }
     return this;
 };
@@ -289,6 +352,3 @@ Base.prototype.resize = function(fn) {   //触发浏览器窗口事件
 Base.prototype.extend = function(name, fn) {
     Base.prototype[name] = fn;
 };
-
-
-

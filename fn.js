@@ -1,12 +1,10 @@
 
-//2016.2.23 基础函数库
+//2016.2.29 基础函数库
 //代码 by 李炎恢js教程
 
-//2016.2.23
-//添加 删除左右空格函数、滚动条初始化
-//添加浏览器检测的闭包函数、DOM加载函数
 
-function getInner() {    //跨浏览器获取视窗大小
+//跨浏览器获取视窗大小
+function getInner() {
     if(typeof window.innerWidth != 'undefined') {
         return {
             width : window.innerWidth,
@@ -20,7 +18,16 @@ function getInner() {    //跨浏览器获取视窗大小
     }
 }
 
-function getStyle(element, attr) {  //跨浏览器获取Style
+//跨浏览器获取滚动条位置
+function getScroll() {
+    return {
+        top : document.documentElement.scrollTop || document.body.scrollTop,
+        left : document.documentElement.scrollLeft || document.body.scrollLeft
+    }
+}
+
+//跨浏览器获取Style
+function getStyle(element, attr) {
     if(typeof window.getComputedStyle != 'undefined') { //W3C
         return window.getComputedStyle(element, null)[attr];
     } else if(typeof element.currentStyle != 'undefined') { //IE
@@ -187,6 +194,23 @@ function scrollTop() {
     document.body.scrollTop = 0;
 }
 
+//添加hover伪类 for ie6 (css格式如 p:hover,p.hover)
+function addhover(){
+    if(document.all) {  //判断是否IE浏览器 
+        var obj = document.all; 
+        for(var i = 0; i < obj.length; i++) { 
+            obj[i].onmouseover = function() { 
+                this.className = 'hover';
+            }; 
+            obj[i].onmouseout = function() { 
+                this.className = '';
+            };
+        } 
+    }
+}
 
+
+//2016.2.29
+//添加 ie6添加hover伪类的函数
 
 
